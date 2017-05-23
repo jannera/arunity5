@@ -59,6 +59,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import org.artoolkit.ar.base.NativeInterface;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CameraSurface extends SurfaceView implements SurfaceHolder.Callback, Camera.PreviewCallback {
 
@@ -143,10 +145,17 @@ public class CameraSurface extends SurfaceView implements SurfaceHolder.Callback
             }
 
             Camera.Parameters parameters = camera.getParameters();
-            parameters.setPreviewSize(Integer.parseInt(dims[0]), Integer.parseInt(dims[1]));
+            int prefWidth = Integer.parseInt(dims[0]);
+            int prefHeight = Integer.parseInt(dims[1]);
+            parameters.setPreviewSize(prefWidth, prefHeight);
+            float prefAspectRatio = prefWidth / (float) prefHeight;
+
             if (parameters.getSupportedFocusModes().contains(camFocusMode)) {
                 parameters.setFocusMode(camFocusMode);
             }
+
+            setHighestResolutionWithAspectRatio(parameters, prefAspectRatio);
+
             parameters.setPreviewFrameRate(30);
             camera.setParameters(parameters);
 
@@ -177,6 +186,35 @@ public class CameraSurface extends SurfaceView implements SurfaceHolder.Callback
             mCameraIsFrontFacing = frontFacing;
 
             camera.startPreview();
+        }
+    }
+
+    @SuppressWarnings("deprecation") // setPreviewFrameRate
+    private void setHighestResolutionWithAspectRatio(Camera.Parameters parameters, float aspectRatio) {
+        List<Camera.Size> previewSizes = parameters.getSupportedPreviewSizes();
+
+        List<Camera.Size> suitableAspectRatios = new ArrayList<Camera.Size>();
+
+        for(Camera.Size size: previewSizes) {
+            float ar = size.width / (float) size.height;
+            if (Math.abs(ar - aspectRatio) < 0.0001f) {
+                suitableAspectRatios.add(size);
+            }
+        }
+
+        int highestWidth = Integer.MIN_VALUE;
+        Camera.Size highestPreviewSize = null;
+        for (Camera.Size size: suitableAspectRatios) {
+            if(size.width > highestWidth){
+                highestPreviewSize = size;
+                highestWidth = size.width;
+            }
+            Log.d("CameraSurface","Possible PreviewSize: " + size.width + "x"+ size.height);
+        }
+
+        if (highestPreviewSize != null) {
+            Log.d("CameraSurface","Selected PreviewSize: " + highestPreviewSize.width + "x"+ highestPreviewSize.height);
+            parameters.setPreviewSize(highestPreviewSize.width,highestPreviewSize.height);
         }
     }
 
