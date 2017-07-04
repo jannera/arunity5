@@ -52,6 +52,7 @@ package org.artoolkit.ar.unity;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -62,6 +63,8 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+
+import com.unity3d.player.UnityPlayer;
 import com.unity3d.player.UnityPlayerNativeActivity;
 import org.artoolkit.ar.base.camera.CameraPreferencesActivity;
 import jp.epson.moverio.bt200.DisplayControl;
@@ -84,6 +87,15 @@ public class UnityARPlayerActivity extends UnityPlayerNativeActivity {
     private DisplayControl mDisplayControl = null;
 
     protected final static int PERMISSION_REQUEST_CAMERA = 77;
+
+    public static String getLauncherURL()
+    {
+        Intent intent = UnityPlayer.currentActivity.getIntent();
+        Uri data = intent.getData();
+        if(data == null)
+            return null;
+        return data.toString();
+    }
 
 
     /**
