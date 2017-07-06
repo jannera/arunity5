@@ -50,6 +50,7 @@
 package org.artoolkit.ar.unity;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -87,6 +88,8 @@ public class UnityARPlayerActivity extends UnityPlayerNativeActivity {
     private DisplayControl mDisplayControl = null;
 
     protected final static int PERMISSION_REQUEST_CAMERA = 77;
+
+    public static UnityARPlayerActivity currentActivity;
 
     public static String getLauncherURL()
     {
@@ -145,6 +148,8 @@ public class UnityARPlayerActivity extends UnityPlayerNativeActivity {
         {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CAMERA);
         }
+
+        currentActivity = this;
     }
 
 	//Handle the result of asking the user for camera permission.
@@ -199,6 +204,10 @@ public class UnityARPlayerActivity extends UnityPlayerNativeActivity {
         if (previewView != null) {
             decorView.removeView(previewView);
             previewView = null; // Make sure camera is released in onPause().
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            finishAndRemoveTask();
         }
     }
 
