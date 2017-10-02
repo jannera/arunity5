@@ -50,7 +50,7 @@
 package org.artoolkit.ar.unity;
 
 import android.Manifest;
-import android.content.Context;
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -63,9 +63,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
 
-import com.unity3d.player.UnityPlayer;
 import com.unity3d.player.UnityPlayerNativeActivity;
 import org.artoolkit.ar.base.camera.CameraPreferencesActivity;
 import jp.epson.moverio.bt200.DisplayControl;
@@ -75,6 +73,10 @@ import jp.epson.moverio.bt200.DisplayControl;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 //For Epson Moverio BT-200. BT200Ctrl.jar must be in libs/ folder.
 
@@ -93,13 +95,28 @@ public class UnityARPlayerActivity extends UnityPlayerNativeActivity {
 
     public static String getLauncherURL()
     {
-        Intent intent = UnityPlayer.currentActivity.getIntent();
+        Intent intent = currentActivity.getIntent();
         Uri data = intent.getData();
         if(data == null)
             return null;
         return data.toString();
     }
 
+    public static void openURLChooser(String url, String titleForChooser) {
+        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        Intent chooserIntent = Intent.createChooser(i, titleForChooser);
+        currentActivity.startActivity(chooserIntent);
+    }
+
+    public static boolean isAppInstalled(String packageName) {
+        Intent launchIntent = currentActivity.getPackageManager().getLaunchIntentForPackage(packageName);
+        return launchIntent != null;
+    }
+
+    public static void launchApp(String packageName) {
+        Intent launchIntent = currentActivity.getPackageManager().getLaunchIntentForPackage(packageName);
+        currentActivity.startActivity(launchIntent);
+    }
 
     /**
      * Walk a view hierarchy looking for the first SurfaceView.
@@ -207,7 +224,16 @@ public class UnityARPlayerActivity extends UnityPlayerNativeActivity {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            finishAndRemoveTask();
+            // only kill the task after a while in the case it is starting something (like launching URL)
+            final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
+
+            exec.schedule(new Runnable(){
+                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                @Override
+                public void run(){
+                    finishAndRemoveTask();
+                }
+            }, 500, TimeUnit.MILLISECONDS);
         }
     }
 
