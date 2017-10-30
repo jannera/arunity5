@@ -93,6 +93,8 @@ public class UnityARPlayerActivity extends UnityPlayerNativeActivity {
 
     public static UnityARPlayerActivity currentActivity;
 
+    private boolean quitOnPause = false;
+
     public static String getLauncherURL()
     {
         Intent intent = currentActivity.getIntent();
@@ -106,6 +108,10 @@ public class UnityARPlayerActivity extends UnityPlayerNativeActivity {
         Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         Intent chooserIntent = Intent.createChooser(i, titleForChooser);
         currentActivity.startActivity(chooserIntent);
+    }
+
+    public static void setQuitOnPause(boolean newValue) {
+        currentActivity.quitOnPause = newValue;
     }
 
     public static boolean isAppInstalled(String packageName) {
@@ -223,7 +229,7 @@ public class UnityARPlayerActivity extends UnityPlayerNativeActivity {
             previewView = null; // Make sure camera is released in onPause().
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && quitOnPause) {
             // only kill the task after a while in the case it is starting something (like launching URL)
             final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
 
